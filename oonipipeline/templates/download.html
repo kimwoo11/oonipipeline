@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Download
+{% endblock title %}
+
+{% block add_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='DataTables/css/dataTables.bootstrap4.min.css') }}">
+{% endblock add_css %}
+
+{% block styles %}
+    <style>
+        p {
+            display: inline
+        }
+
+        #meta-table_info {
+            font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+            color: #5a6268;
+        }
+    </style>
+
+{% endblock styles %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='DataTables/js/jquery.dataTables.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='DataTables/js/dataTables.bootstrap4.min.js') }}"></script>
+    <script>
+        let test_name = null;
+
+        // Download
+        function download() {
+            let xhttp = new XMLHttpRequest();
+            let set_id = document.getElementById("set_id").innerHTML;
+            let table = document.getElementById("table").value;
+
+
+            if ((table === "Select a table..") && (set_id === "No data set selected")) {
+                document.getElementById("error").innerText = "Please provide an ID of a data set and table name";
+            }
+            else if (table === "") {
+                document.getElementById("error").innerText = "Please provide a table name"
+            }
+            else if (set_id === "No data set selected") {
+                document.getElementById("error").innerText = "Please provide a set ID"
+            }
+            else {
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState === 4 && this.status === 200) {
+                        document.getElementById("download_button").disabled = true;
+                        document.getElementById("download_button").innerHTML = "Downloading...";
+                        window.location.assign("{{ url_for("api.downloadresource") }}" + "/" + test_name + '/' + table + "?set_id=" + set_id);
+                        document.getElementById("download_button").innerHTML = "Download Table";
+                        document.getElementById("download_button").disabled = false;
+                        document.getElementById("error").innerText = ""
+
+                    }
+                    else if (this.readyState === 4 && this.status === 400) {
+                        let response = JSON.parse(this.responseText);
+                        document.getElementById("error").innerHTML = response["message"];
+                    }
+                    else if (this.readyState === 4){
+                        let response = JSON.parse(this.responseText);
+                        document.getElementById("error").innerHTML = response["message"];
+                    }
+                };
+                xhttp.open("GET", "{{ url_for('api.downloadresource') }}" + "/" + test_name + '/' + table + "?set_id=" + set_id, true);
+                xhttp.send();
+            }
+        }
+
+        // Pagination and activation
+        const api_url = '{{ url_for('api.metatableresource') }}';
+
+        $(document).ready(function () {
+            const mt = $('#meta-table');
+
+            const metaTable = mt.DataTable({
+                ajax: {
+                    url: api_url,
+                    dataSrc: "data",
+                },
+                columns: [
+                    {data: "set_id"},
+                    {data: "set_name"},
+                    {data: "test_name"},
+                    {data: "comment"},
+                    {data: "creation_date"}
+                ],
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                pageLength: 5,
+                paging: true,
+                searching: true
+            });
+            mt.find('tbody').on( 'click', 'tr', function () {
+                document.getElementById("set_id").innerText = metaTable.row( this ).data()['set_id'];
+                metaTable.$('tr.active').removeClass('active table-active');
+                $(this).addClass('active table-active');
+                test_name = metaTable.row(this).data()['test_name'];
+            });
+
+        });
+
+    </script>
+
+{% endblock scripts %}
+
+{% block body %}
+    <div class="container">
+        <div class="row justify-content-lg-center">
+            <h1>Download</h1>
+        </div>
+        <section>
+            <div class="container-fluid">
+                <section id="intro">
+                    <div class="container-fluid">
+                        <p>
+                            Please choose a data set and the name of the table you want to
+                            download:
+                        </p>
+                    </div>
+                </section>
+                <section id="table-form">
+                    <div class="container-fluid">
+                        <p><strong>ID of selected data set: </strong></p>
+                        <p id="set_id">No data set selected</p>
+                        <div class="container-fluid">
+                            <p id="meta-table-p">Click on the data set you want from the following table: </p>
+                        </div>
+                        <table id="meta-table" class="table table-bordered">
+                            <thead class="thead-light table-hover">
+                                <tr>
+                                    <th>Set ID</th>
+                                    <th>Set Name</th>
+                                    <th>Test Name</th>
+                                    <th>Comment</th>
+                                    <th>Creation Date</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <label for="table"><strong> Name of the table: </strong></label>
+                    <select class="form-control" id="table">
+                        <option>Select a table..</option>
+                        <option>web_connectivity</option>
+                        <option>web_test_keys</option>
+                        <option>web_queries</option>
+                        <option>web_answers</option>
+                        <option>web_control_http_request</option>
+                        <option>web_requests</option>
+                        <option>web_control_dns</option>
+                        <option>web_tcp_connect</option>
+                        <option>web_control_tcp_connect</option>
+                        <option>dns_consistency</option>
+                        <option>dns_test_keys</option>
+                        <option>dns_queries</option>
+                        <option>dns_answers</option>
+                        <option>dns_inconsistent</option>
+                        <option>dns_failed</option>
+                        <option>dns_errors</option>
+                    </select>
+                    <small id="required" class="text-danger">*Required</small>
+                </section>
+            </div>
+        </section>
+        <p id="error" class="font-weight-bold text-danger"></p>
+        <button type="button" onclick="download()" class="btn btn-outline-success float-right" id="download_button">
+            Download table
+        </button>
+    </div>
+{% endblock body %}

@@ -1,0 +1,28 @@
+<nav id="navbar" class="navbar navbar-expand-sm bg-light navbar-light sticky-top justify-content-center">
+    <ul class="navbar-nav">
+        <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('web_pages.tables') }}">Tables</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('web_pages.select_and_store') }}">Select and Store</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('web_pages.download') }}">Download</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
+                 Extra Features
+            </a>
+            <div class="dropdown-menu">
+                <a class="dropdown-item" href="{{ url_for('web_pages.headers') }}">Headers Search</a>
+                <a class="dropdown-item" href="{{ url_for('web_pages.body') }}">Body Search</a>
+            </div>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="{{ url_for("web_pages.api_doc") }}">API</a>
+        </li>
+    </ul>
+</nav>

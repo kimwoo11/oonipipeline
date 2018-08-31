@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Tables
+{% endblock title %}
+
+{% block add_css %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='DataTables/css/dataTables.bootstrap4.min.css') }}">
+{% endblock add_css %}
+
+{% block styles %}
+    <style>
+        #meta-table_info {
+            font-family: "Palatino Linotype", "Book Antiqua", Palatino, serif;
+            color: #5a6268;
+        }
+    </style>
+
+{% endblock styles %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{{ url_for('static', filename='DataTables/js/jquery.dataTables.min.js') }}"></script>
+    <script type="text/javascript" src="{{ url_for('static', filename='DataTables/js/dataTables.bootstrap4.min.js') }}"></script>
+
+
+    <!-- Pagination -->
+    <script>
+        const api_url = '{{ url_for('api.metatableresource') }}';
+
+        $(document).ready(function () {
+            const mt = $('#meta-table');
+
+            const metaTable = mt.DataTable({
+                ajax: {
+                    url: api_url,
+                    dataSrc: "data",
+                },
+                columns: [
+                    {data: "set_id"},
+                    {data: "set_name"},
+                    {data: "test_name"},
+                    {data: "comment"},
+                    {data: "creation_date"}
+                ],
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+                pageLength: 5,
+                paging: true,
+                searching: true
+            });
+        });
+
+    </script>
+{% endblock scripts %}
+{% block body %}
+    <div class="container">
+        <!-- header -->
+        <div class="container-fluid">
+            <h1>Tables</h1>
+        </div>
+        <!-- intro -->
+        <section id="intro">
+            <div class="container-fluid">
+                <p>
+                    All selected and stored data sets are organized into multiple tables to help users extract the
+                    data they need with convenience. The following sections demonstrate what each table contains and how
+                    the
+                    tables are connected.
+                </p>
+            </div>
+        </section>
+
+        <!-- meta table -->
+        <section id="meta_table">
+            <div class="container-fluid">
+                <h3>
+                    Meta Table
+                </h3>
+                <p>
+                    The Meta Table is one of the most useful and important tables in OONI Pipeline. It contains basic
+                    information about
+                    each data set the user has selected/stored that is ready for download. Additionally, the API allows
+                    for deletion of data sets through the Meta Table, as well as editing the set name or comments about
+                    the data set. Documentation on using the Pipeline API can be found
+                    <a href="{{ url_for('web_pages.api_doc') }}">here</a>.
+                </p>
+                <table id="meta-table" class="table table-bordered">
+                    <thead class="thead-light table-hover">
+                    <tr>
+                        <th>Set ID</th>
+                        <th>Set Name</th>
+                        <th>Test Name</th>
+                        <th>Comment</th>
+                        <th>Creation Date</th>
+                    </tr>
+                    </thead>
+                </table>
+                <div class="container-fluid">
+                    <table class="table table-bordered" id="meta-table">
+                    </table>
+                    <p id="error"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- overview -->
+        <section id="overview">
+            <div class="container-fluid">
+                <h3>
+                    Overview
+                </h3>
+                <p>
+                    The following are simple ERDs created by DataGrip. The diagrams give a general idea of the
+                    relationship and contents of each table, as well as the method of organizing data for different
+                    measurement
+                    tests.
+                </p>
+                <div class="img-thumbnail">
+                    <img class="img-responsive rounded" src="{{ url_for('static', filename='img/webconn_erd.png') }}"
+                         style="width:100%">
+                    <div class="caption text-center">
+                        <p><b>Figure 1.</b> ERD for storing Web Connectivity measurements</p>
+                    </div>
+                </div>
+                <div class="img-thumbnail">
+                    <img class="img-responsive rounded" src="{{ url_for('static', filename='img/dns_erd.png') }}"
+                         style="width:100%">
+                    <div class="caption text-center">
+                        <p><b>Figure 2.</b> ERD for storing DNS Consistency measurements</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+{% endblock body %}

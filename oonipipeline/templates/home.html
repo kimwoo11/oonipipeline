@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock title %}
+
+{% block body %}
+    <style>
+        .container-fluid {
+            padding: 0;
+        }
+    </style>
+    <section id="masthead">
+        <div class="container-fluid">
+            <header class="masthead d-flex">
+                <div class="container text-center my-auto">
+                    <h1 class="mb-1"><strong>OONI Pipeline</strong></h1>
+                    <h3 class="mb-5">
+                        <em>
+                            Select, store, and download!
+                        </em>
+                    </h3>
+                </div>
+                <div class="overlay"></div>
+            </header>
+        </div>
+    </section>
+
+    <section id="pipeline-tree">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center" style="padding-bottom: 2em">
+                    <h1>The Pipeline</h1>
+                    <h5 class="section-subheading text-muted">How does it work?</h5>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-12">
+                    <ul class="timeline">
+                        <li>
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid"
+                                     src="{{ url_for('static', filename='img/about/select.jpg') }}" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Select</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">
+                                        Users can first select a data set that follows their criteria from OONI's
+                                        database. Users have
+                                        the option to select data by country code, date, asn, type of test, and url.
+                                        Here are a couple examples: All Russian
+                                        web connectivity measurements from January 2016 that test the URL
+                                        roskomsvoboda.org;
+                                        or all Chinese web connectivity measurements from March 2017.
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                        <li class="timeline-inverted">
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid"
+                                     src="{{ url_for('static', filename='img/about/store.jpg') }}" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Store</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">
+                                        Users can then store the selected data into the Pipeline's database. The storing
+                                        process involves downloading
+                                        the selected data set from OONI and organizing it into multiple tables in our
+                                        database. Learn more
+                                        about how the data is organized and what tables are available
+                                        <a href='{{ url_for('web_pages.tables') }}'>here</a>.
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                        <li>
+                            <div class="timeline-image">
+                                <img class="rounded-circle img-fluid"
+                                     src="{{ url_for('static', filename='img/about/download.jpg') }}" alt="">
+                            </div>
+                            <div class="timeline-panel">
+                                <div class="timeline-heading">
+                                    <h4>Download</h4>
+                                </div>
+                                <div class="timeline-body">
+                                    <p class="text-muted">
+                                        Once the data set is stored, users have the option to extract and download the
+                                        data/tables that
+                                        they need!
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="bg-light" id="start">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <h2 style="padding-bottom: 1em">Begin Selecting and Storing Data!</h2>
+                    <a class="btn center-block btn-outline-success" href="{{ url_for('web_pages.select_and_store') }}" role="button">
+                        Select and Store
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+{% endblock body %}

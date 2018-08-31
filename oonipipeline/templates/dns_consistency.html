@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    DNS Consistency
+{% endblock title %}
+
+{% block body %}
+    <style>
+        p {
+            display: inline
+        }
+    </style>
+    <div class="container">
+        <div class="row justify-content-lg-center">
+            <h1>DNS Consistency</h1>
+        </div>
+        <section>
+            <div class="container-fluid">
+                <section id="intro">
+                    <div class="container-fluid">
+                        <p>
+                            Please choose a data set and the name of the table you want to
+                            download:
+                        </p>
+                    </div>
+                </section>
+                <section id="table-form">
+                    <div class="container-fluid">
+                        <p><strong>ID of selected data set: </strong></p>
+                        <p id="set_id">No data set selected</p>
+                        <div class="container-fluid">
+                            <p id="meta-table-p"></p>
+                        </div>
+                        <table class="table table-bordered display" id="meta-table">
+                            <script>
+                                let prevRow = null;
+                                let xhttp = new XMLHttpRequest();
+                                xhttp.onreadystatechange = function () {
+                                    if (this.readyState === 4 && this.status === 200) {
+                                        let response = JSON.parse(this.responseText);
+                                        let json_data = response["data"];
+                                        if (json_data.length === 0) {
+                                            document.getElementById("meta-table-p").innerHTML = "No data sets currently stored"
+                                        }
+                                        else {
+                                            document.getElementById("meta-table-p").innerHTML = "Click on the data set you want to download: ";
+                                            let col = [];
+                                            for (let i = 0; i < json_data.length; i++) {
+                                                for (let key in json_data[i]) {
+                                                    if (col.indexOf(key) === -1) {
+                                                        col.push(key);
+                                                    }
+                                                }
+                                            }
+                                            // CREATE DYNAMIC TABLE.
+                                            let table = document.createElement("thead");
+                                            table.className = 'thead-light';
+                                            // CREATE HTML TABLE HEADER ROW USING THE EXTRACTED HEADERS ABOVE.
+                                            let tr = table.insertRow(-1);                   // TABLE ROW.
+                                            for (let i = 0; i < col.length; i++) {
+                                                let th = document.createElement("th");      // TABLE HEADER.
+                                                th.innerHTML = col[i];
+                                                tr.appendChild(th);
+                                            }
+                                            let divContainer = document.getElementById("meta-table");
+                                            divContainer.appendChild(table);
+
+                                            // ADD JSON DATA TO THE TABLE AS ROWS.
+                                            let tbody = document.createElement("tbody");
+                                            for (let i = 0; i < json_data.length; i++) {
+                                                tr = tbody.insertRow(-1);
+                                                tr.onclick = function () {
+                                                    selectRow(this);
+                                                };
+                                                for (let j = 0; j < col.length; j++) {
+                                                    let tabCell = tr.insertCell(-1);
+                                                    tabCell.innerHTML = json_data[i][col[j]];
+                                                }
+                                            }
+                                            divContainer.appendChild(tbody);
+                                            // FINALLY ADD THE NEWLY CREATED TABLE WITH JSON DATA TO A CONTAINER.
+                                        }
+                                    }
+                                };
+                                xhttp.open("GET", "{{ url_for('api.dnsconsistencyresource') }}", true);
+                                xhttp.send();
+                                selectRow = function (x) {
+                                    if (prevRow !== null) {
+                                        prevRow.bgColor = "white";
+                                    }
+                                    let row = x.innerHTML;
+                                    x.bgColor = "#E6E6FA";
+                                    document.getElementById("set_id").innerHTML = row[4];
+                                    prevRow = x;
+                                };
+                            </script>
+                        </table>
+                    </div>
+                    <label for="table"><strong> Name of the table: </strong></label>
+                        <select class="form-control" id="table">
+                            <option>Select a table..</option>
+                            <option>dns_consistency</option>
+                            <option>dns_test_keys</option>
+                            <option>dns_queries</option>
+                            <option>dns_answers</option>
+                            <option>dns_inconsistent</option>
+                            <option>dns_failed</option>
+                            <option>dns_errors</option>
+                        </select>
+                    <small id="required" class="text-danger">*Required</small>
+                </section>
+            </div>
+        </section>
+        <p id="error" class="font-weight-bold text-danger"></p>
+        <button type="button" onclick="download()" class="btn btn-outline-success float-right" id="download_button">
+            Download table
+        </button>
+    </div>
+    <script>
+        function download() {
+            let xhttp = new XMLHttpRequest();
+            let set_id = document.getElementById("set_id").innerHTML;
+            let table = document.getElementById("table").value;
+
+
+            if ((table === "Select a table..") && (set_id === "")) {
+                document.getElementById("error").innerHTML = "Please provide an ID of a data set and table name";
+            }
+            else if (table === "") {
+                document.getElementById("error").innerHTML = "Please provide a table name"
+            }
+            else if (set_id === "") {
+                document.getElementById("error").innerHTML = "Please provide a set ID"
+            }
+            else {
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState === 4 && this.status === 200) {
+                        document.getElementById("download_button").disabled = true;
+                        document.getElementById("download_button").innerHTML = "Downloading...";
+                        window.location.assign("{{ url_for("api.dnsconsistencyresource") }}" + "/" + table + "?set_id=" + set_id);
+                        document.getElementById("download_button").innerHTML = "Download Table";
+                        document.getElementById("download_button").disabled = false;
+
+                    }
+                    else if (this.readyState === 4 && this.status === 400) {
+                        let response = JSON.parse(this.responseText);
+                        document.getElementById("error").innerHTML = response["message"];
+                    }
+                    else {
+                        let response = JSON.parse(this.responseText);
+                        document.getElementById("error").innerHTML = response["message"];
+                    }
+                };
+                xhttp.open("GET", "{{ url_for('api.dnsconsistencyresource') }}" + "/" + table + "?set_id=" + set_id, true);
+                xhttp.send();
+            }
+        }
+    </script>
+{% endblock body %}

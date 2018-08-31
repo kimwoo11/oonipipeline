@@ -1,0 +1,221 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Headers Search
+{% endblock title %}
+
+{% block add_css %}
+    <link rel="stylesheet" href="{{ url_for('static',  filename='pikaday/css/pikaday.css') }}">
+{% endblock add_css %}
+
+{% block scripts %}
+    <script src="{{ url_for('static',  filename='pikaday/moment.min.js') }}"></script>
+    <script src="{{ url_for('static',  filename='pikaday/pikaday.js') }}"></script>
+    <script>
+
+        function fetch() {
+            var xhttp2 = new XMLHttpRequest();
+            xhttp2.onreadystatechange = function () {
+                if (xhttp2.readyState === 4 && xhttp2.status === 200) {
+                    let response = JSON.parse(xhttp2.responseText);
+                    let current = response['current'];
+                    let total = response['total'];
+                    if (current !== 'empty') {
+                        document.getElementById("progress").innerHTML = String(current) + " of " + String(total) + " reports parsed";
+                        document.getElementById("progress-bar").style.width = ((current / total) * 100) + '%'
+                    }
+                }
+            };
+            xhttp2.open("GET", "{{ url_for("api.statusresource") }}", true);
+            xhttp2.send();
+        }
+
+        function headerSearch() {
+
+            let xhttp = new XMLHttpRequest();
+            let field_name = document.getElementById("field_name").value;
+            let target_data = document.getElementById("target_data").value;
+            const set_name = "Search Headers for " + target_data + " in " + field_name;
+            let country = document.getElementById("country").value;
+            let asn = document.getElementById("asn").value;
+            let url = document.getElementById("url").value;
+            let start_date = document.getElementById("start_date").value;
+            let end_date = document.getElementById("end_date").value;
+            let json_data = {};
+
+            if (field_name !== '')
+                json_data["field_name"] = field_name;
+            if (target_data !== '')
+                json_data["target_data"] = target_data;
+            if (country !== '')
+                json_data["country"] = country;
+            if (asn !== '')
+                json_data["asn"] = asn;
+            if (url !== '')
+                json_data["url"] = url;
+            if (start_date !== '')
+                json_data["start_date"] = start_date;
+            if (end_date !== '')
+                json_data["end_date"] = end_date;
+
+
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 200) {
+                    window.location.assign("{{ url_for("web_pages.headers_success") }}" + "/" + set_name + ".csv")
+                }
+                else if (this.readyState === 4 && this.status === 422) {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Select and Store Data Set";
+                    document.getElementById("error").innerHTML = "*Please provide a valid input for the following fields: ";
+                    let response = JSON.parse(this.responseText);
+                    let message = response["message"];
+
+                    for (let key in message) {
+                        document.getElementById("error").innerHTML += key + ", ";
+                    }
+                }
+                else if (this.readyState === 4 && this.status === 400) {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Search!";
+                    let response = JSON.parse(this.responseText);
+                    return document.getElementById("error").innerHTML = response["message"];
+                }
+                else if (this.readyState === 1) {
+                    document.getElementById("store_button").disabled = true;
+                    document.getElementById("store_button").innerHTML = "Searching...";
+                    document.getElementById("error").innerHTML = "";
+                }
+                else {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Search!";
+                    return document.getElementById("error").innerHTML = this.response;
+                }
+            };
+            xhttp.open("POST", "{{ url_for("api.headerresource") }}", true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            let data = JSON.stringify(json_data);
+            xhttp.send(data);
+
+            setTimeout(function () {
+                if (document.getElementById("store_button").disabled === true) {
+                    document.getElementById("loading_p").innerText = "Don't worry. Your data is being parsed and stored as long as this guy keeps spinning.";
+                    document.getElementById("loading_img").src = "{{ url_for('static', filename='img/loading.gif') }}"
+                }
+            }, 6000)
+        }
+
+        setInterval(function () {
+            if (document.getElementById("store_button").disabled === true) {
+                fetch()
+            }
+            else{
+                document.getElementById("loading_p").innerText = "";
+                document.getElementById("loading_img").src = "{{ url_for('static', filename='img/white.png') }}";
+            }
+        }, 2000)
+
+    </script>
+
+    <!-- Date Picker -->
+    <script>
+        $(document).ready(function () {
+                var start_picker = new Pikaday(
+                    {
+                        field: document.getElementById('start_date'),
+                        firstDay: 1,
+                        minDate: 2012,
+                        maxDate: new Date(),
+                        defaultDate: new Date(),
+                        setDefaultDate: true,
+                        yearRange: [2012, (new Date()).getFullYear()]
+                    });
+                var end_picker = new Pikaday(
+                    {
+                        field: document.getElementById('end_date'),
+                        firstDay: 1,
+                        minDate: 2012,
+                        maxDate: new Date(),
+                        defaultDate: new Date(),
+                        setDefaultDate: true,
+                        yearRange: [2012, (new Date()).getFullYear()]
+                    });
+            }
+        );
+    </script>
+{% endblock scripts %}
+
+{% block body %}
+    <div class="container">
+        <!-- header -->
+        <div class="container-fluid">
+            <h1>Headers Search</h1>
+        </div>
+
+        <!-- intro -->
+        <section id="intro">
+            <div class="container-fluid">
+                <p>
+                    This page allows you to search headers of responses from the web connectivity test.
+                </p>
+                <p>
+                    Please specify the following parameters:
+                </p>
+            </div>
+        </section>
+        <section id="form">
+            <div class="container-fluid">
+                <div class="form-group">
+                    <label for="field_name">Name of the field name you want to search from: </label>
+                    <input type="text" class="form-control" id="field_name" placeholder="ex) Server">
+                    <small id="required" class="text-danger">*Required (case sensitive)</small>
+                </div>
+                <div class="form-group">
+                    <label for="target_data">The data you are searching for: </label>
+                    <input type="text" class="form-control" id="target_data" placeholder="ex) WireFilter">
+                    <small id="required" class="text-danger">*Required (case sensitive)</small>
+                </div>
+                <div class="form-group">
+                    <label for="country">ISO Alpha-2 country code: </label>
+                    <input type="text" class="form-control" id="country" placeholder="ex) US">
+                </div>
+                <div class="form-group">
+                    <label for="asn">Autonomous System Number (ASN): </label>
+                    <input type="text" class="form-control" id="asn" placeholder="ex) AS1234">
+                </div>
+                <div class="form-group">
+                    <label for="url">URL or Input: </label>
+                    <input type="text" class="form-control" id="url" placeholder="ex) https://torproject.org/">
+                </div>
+                <div>
+                    <label for="start_date">Measurements from (start date): </label>
+                    <input type="text" class="form-control" id="start_date">
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+                <div>
+                    <label for="end_date">Measurement to (end date): </label>
+                    <input type="text" class="form-control" id="end_date">
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+            </div>
+            <p id="error" class="font-weight-bold text-danger"></p>
+            <button type="button" onclick="headerSearch()" class="btn btn-outline-success float-right" id="store_button">
+                Search!
+            </button>
+        </section>
+        <section>
+            <div class="container-fluid">
+                <p id="progress">Validating input above...</p>
+                <div class="progress">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0"></div>
+                </div>
+                <div id="loading">
+                    <p id="loading_p" style="display:inline"></p>
+                    <img id="loading_img" style="width:2rem;height:3rem"
+                         src="{{ url_for('static', filename='img/white.png') }}">
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock body %}

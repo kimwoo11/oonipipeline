@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Success!
+{% endblock title %}
+
+{% block scripts %}
+    <script>
+        redirect = function () {
+            window.location.assign("{{ url_for("web_pages.body") }}")
+        };
+
+        $(document).ready(function () {
+            window.location.assign("{{ url_for("api.bodyresource") }}" + '?filename=' + '{{ filename }}');
+        });
+    </script>
+{% endblock scripts %}
+
+{% block body %}
+    <div class="container">
+        <h1>
+            Success!
+        </h1>
+        <button id="button" type="button" onclick="redirect()" class="btn btn-outline-success">
+            Click to go back and search for more.
+        </button>
+    </div>
+{% endblock body %}

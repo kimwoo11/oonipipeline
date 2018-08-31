@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Select and Store
+{% endblock title %}
+
+{% block add_css %}
+    <link rel="stylesheet" href="{{ url_for('static',  filename='pikaday/css/pikaday.css') }}">
+{% endblock add_css %}
+
+{% block scripts %}
+    <script src="{{ url_for('static',  filename='pikaday/moment.min.js') }}"></script>
+    <script src="{{ url_for('static',  filename='pikaday/pikaday.js') }}"></script>
+    <script>
+        function fetch() {
+            var xhttp2 = new XMLHttpRequest();
+            xhttp2.onreadystatechange = function () {
+                if (xhttp2.readyState === 4 && xhttp2.status === 200) {
+                    let response = JSON.parse(xhttp2.responseText);
+                    let current = response['current'];
+                    let total = response['total'];
+                    if (current !== 'empty') {
+                        document.getElementById("progress").innerHTML = String(current) + " of " + String(total) + " reports parsed";
+                        document.getElementById("progress-bar").style.width = ((current / total) * 100) + '%'
+                    }
+                }
+            };
+            xhttp2.open("GET", "{{ url_for("api.statusresource") }}", true);
+            xhttp2.send();
+        }
+
+        function store() {
+            let xhttp = new XMLHttpRequest();
+            let set_name = document.getElementById("set_name").value;
+            let country = document.getElementById("country").value;
+            let asn = document.getElementById("asn").value;
+            let url = document.getElementById("url").value;
+            let start_date = document.getElementById("start_date").value;
+            let end_date = document.getElementById("end_date").value;
+            let comment = document.getElementById("comment").value;
+            let test_name = document.getElementById("test_name").value;
+            let json_data = {};
+
+            if (set_name !== '')
+                json_data["set_name"] = set_name;
+            if (country !== '')
+                json_data["country"] = country;
+            if (asn !== '')
+                json_data["asn"] = asn;
+            if (url !== '')
+                json_data["url"] = url;
+            if (start_date !== '')
+                json_data["start_date"] = start_date;
+            if (end_date !== '')
+                json_data["end_date"] = end_date;
+            if (comment !== '')
+                json_data["comment"] = comment;
+            if (test_name !== '')
+                json_data["test_name"] = test_name;
+
+            xhttp.onreadystatechange = function () {
+                if (this.readyState === 4 && this.status === 422) {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Select and Store Data Set";
+                    document.getElementById("error").innerHTML = "*Please provide a valid input for the following fields: ";
+                    let response = JSON.parse(this.responseText);
+                    let message = response["message"];
+
+                    for (let key in message) {
+                        document.getElementById("error").innerHTML += key + ", ";
+                    }
+                }
+                else if (this.readyState === 4 && this.status === 400) {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Select and Store Data Set";
+                    let response = JSON.parse(this.responseText);
+                    let message = response["message"];
+                    document.getElementById("error").innerHTML = "*" + message;
+                }
+                else if (this.readyState === 4 && this.status === 201) {
+                    window.location.assign("{{ url_for("web_pages.success") }}")
+                }
+                else if (this.readyState === 1) {
+                    document.getElementById("store_button").disabled = true;
+                    document.getElementById("store_button").innerHTML = "Storing selected data...";
+                    document.getElementById("error").innerHTML = "";
+                }
+                else if (this.readyState === 4) {
+                    document.getElementById("store_button").disabled = false;
+                    document.getElementById("store_button").innerHTML = "Select and Store Data Set";
+                    document.getElementById("error").innerHTML = this.response;
+                }
+            };
+
+            xhttp.open("POST", "{{ url_for("api.storeresource") }}", true);
+            xhttp.setRequestHeader("Content-Type", "application/json");
+            let data = JSON.stringify(json_data);
+            xhttp.send(data);
+
+            setTimeout(function() {
+                if (document.getElementById("store_button").disabled === true) {
+                    document.getElementById("loading_p").innerText ="Don't worry. Your data is being parsed and stored as long as this guy keeps spinning.";
+                    document.getElementById("loading_img").src = "{{ url_for('static', filename='img/loading.gif') }}"
+                }
+            }, 6000)
+        }
+
+        setInterval(function () {
+            if (document.getElementById("store_button").disabled === true) {
+                fetch()
+            }
+            else if (document.getElementById("store_button").disabled === false) {
+                document.getElementById("loading_p").innerText = "";
+                document.getElementById("loading_img").src = "{{ url_for('static', filename='img/white.png') }}";
+            }
+        }, 2000);
+
+
+        $(document).ready(function () {
+                var start_picker = new Pikaday(
+                    {
+                        field: document.getElementById('start_date'),
+                        firstDay: 1,
+                        minDate: 2012,
+                        maxDate: new Date(),
+                        defaultDate: new Date(),
+                        setDefaultDate: true,
+                        yearRange: [2012, (new Date()).getFullYear()]
+                    });
+                var end_picker = new Pikaday(
+                    {
+                        field: document.getElementById('end_date'),
+                        firstDay: 1,
+                        minDate: 2012,
+                        maxDate: new Date(),
+                        defaultDate: new Date(),
+                        setDefaultDate: true,
+                        yearRange: [2012, (new Date()).getFullYear()]
+                    });
+            }
+        );
+    </script>
+
+{% endblock scripts %}
+
+{% block body %}
+    <div class="container">
+        <!-- header -->
+        <div class="container-fluid">
+            <h1>Select and Store</h1>
+        </div>
+
+        <!-- intro -->
+        <section id="intro">
+            <div class="container-fluid">
+                <p>
+                    Please specify the following parameters:
+                </p>
+            </div>
+        </section>
+        <section id="form">
+            <div class="container-fluid">
+                <div class="form-group">
+                    <label for="set_name">Name of the data set: </label>
+                    <input type="text" class="form-control" id="set_name" placeholder="ex) dns test 1">
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+                <div class="form-group">
+                    <label for="country">ISO Alpha-2 country code: </label>
+                    <input type="text" class="form-control" id="country" placeholder="ex) US">
+                </div>
+                <div class="form-group">
+                    <label for="asn">Autonomous System Number (ASN): </label>
+                    <input type="text" class="form-control" id="asn" placeholder="ex) AS1234">
+                </div>
+                <div class="form-group">
+                    <label for="url">URL or Input: </label>
+                    <input type="text" class="form-control" id="url" placeholder="ex) https://torproject.org/">
+                </div>
+                <div>
+                    <label for="start_date">Measurements from (start date): </label>
+                    <input type="text" class="form-control" id="start_date">
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+                <div>
+                    <label for="end_date">Measurement to (end date): </label>
+                    <input type="text" class="form-control" id="end_date">
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+                <div class="form-group">
+                    <label for="comment">Comments about data set: </label>
+                    <input type="text" class="form-control" id="comment"
+                           placeholder="ex) Webconn test for US from 2016 to 2017">
+                </div>
+                <div>
+                    <label for="test_name">Name of test: </label>
+                    <select class="form-control" id="test_name">
+                        <option>Select a test..</option>
+                        <option>web_connectivity</option>
+                        <option>dns_consistency</option>
+                    </select>
+                    <small id="required" class="text-danger">*Required</small>
+                </div>
+            </div>
+            <p id="error" class="font-weight-bold text-danger"></p>
+            <div class="container-fluid">
+                <button type="button" onclick="store()" class="btn btn-outline-success float-right"
+                        id="store_button">
+                    Select and Store Data Set
+                </button>
+            </div>
+        </section>
+        <section>
+            <div class="container-fluid">
+                <p id="progress">Validating input above...</p>
+                <div class="progress">
+                    <div id="progress-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+                         role="progressbar"
+                         aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0"></div>
+                </div>
+                <div id="loading">
+                    <p id="loading_p" style="display:inline"></p>
+                    <img id="loading_img" style="width:2rem;height:3rem" src="{{ url_for('static', filename='img/white.png') }}">
+                </div>
+            </div>
+        </section>
+    </div>
+{% endblock body %}

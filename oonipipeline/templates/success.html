@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Loading page
+{% endblock title %}
+
+{% block body %}
+    <div class="container">
+        <h1>
+            Data set successfully stored!
+        </h1>
+        <button id="button" type="button" onclick="redirect()" class="btn btn-outline-success">
+            Click to download data set
+        </button>
+    </div>
+    <script>
+        redirect = function(){
+            window.location.assign("{{ url_for("web_pages.download") }}")
+        }
+    </script>
+{% endblock body %}

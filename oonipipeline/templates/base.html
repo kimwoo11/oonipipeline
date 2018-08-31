@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <!-- Required meta tags -->
+        <link rel="icon" href="data:,">
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="{{url_for('static',  filename='bootstrap/css/bootstrap.min.css')}}">
+        <link rel="stylesheet" href="{{url_for('static',  filename='custom/custom.css')}}">
+        {% block add_css %}{% endblock add_css %}
+        {% block styles %}{% endblock styles %}
+        <title>
+            OONI Pipeline - {% block title %}{% endblock title %}
+        </title>
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="{{ url_for('static', filename='jquery/dist/jquery.min.js') }}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="{{url_for('static',  filename='bootstrap/js/bootstrap.min.js')}}"></script>
+        {% block scripts %}{% endblock scripts %}
+    </head>
+
+    <body>
+    {% block navbar %}{% include 'main_navbar.html' %}{% endblock navbar %}
+    {% block body %}{% endblock body %}
+    </body>
+</html>

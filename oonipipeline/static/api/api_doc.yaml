@@ -1,0 +1,874 @@
+swagger: '2.0'
+info:
+  title: OONI Pipeline API
+  description: |
+    # OONI Pipeline API
+      The OONI Pipeline API is a useful tool for developers to quickly retrieve and download the data they require. The API
+      does everything the web interface does with more flexibility and features.
+
+    # Note
+      Please note that the example request samples and responses are simple examples. Please make requests according to
+      your specific needs and adjust parameters where needed.
+
+    # Getting Started
+      Requests can be made with `curl` or other helper libraries by following regular REST calls. For example, here is how to GET the existing tables in the Meta Table:
+
+      `curl http://localhost:5000/api/metatable`
+
+      Here is a sample responce from calling this resource:
+
+      ```json
+      {
+          "status": "success",
+          "data": [
+              {
+                  "test_name": "web_connectivity",
+                  "set_name": "WireFilter_Search",
+                  "comment": "Search for use of WireFilter in countries other than SA",
+                  "creation_date": "2018-07-20T09:55:18.049506+00:00"
+              },
+              {
+                  "test_name": "dns_consistency",
+                  "set_name": "CH budweiser.com dns test",
+                  "comment": "None",
+                  "creation_date": "2018-07-23T12:24:04.712466+00:00"
+              }
+          ]
+      }
+      ```
+
+    # Base URL
+      The base URL that users must prepend all resource calls with is the following:
+
+      `http://localhost:5000/api`
+
+
+    # Workflow
+      The pipeline can be divided into three steps - select, store, and download. Users can first select a data set that
+      follows their criteria from OONI's database. Users can then store the selected data into
+      the Pipeline's database. Once the data is stored, users have the option to extract and download the data that they
+      need from any data set. Users can also use the Meta Table containing meta information
+      about all the data sets that are stored in the database as reference.
+
+  version: "0.0.1"
+  x-logo:
+    url: "/static/img/ooni-logo.png"
+    backgroundColor: "#FFFFFF"
+# the domain of the service
+host: localhost:5000
+# array of all schemes that your API supports
+schemes:
+  - https
+x-tagGroups:
+  - name: Endpoints
+    tags:
+      - Store
+      - Web Connectivity
+      - DNS Consistency
+      - Meta Table
+      - Download
+      - Headers Search
+      - Body Search
+# will be prefixed to all paths
+basePath: /api
+produces:
+  - application/json
+paths:
+  /store:
+    post:
+      summary: Stores a data set
+      description: |
+        Stores a data set in compliance with user defined specifications. Users can specify which measurements to store by country, asn, url, timeframe,
+        and type of test. An example is storing all Russian web_connectivity measurements from January 2016 that tests the URL https://roskomsvoboda.org
+      parameters:
+        - name: set_name
+          in: query
+          description: Name of the new data set to be created
+          required: true
+          type: string(150)
+        - name: country
+          in: query
+          description: ISO Alpha-2 country code
+          required: false
+          type: string(2)
+        - name: asn
+          in: query
+          description: Autonomous System Number
+          required: false
+          type: string
+        - name: url
+          in: query
+          description: Tested URL
+          required: false
+          type: string
+        - name: start_date
+          in: query
+          description: Store measurements from this date to the end_date
+          required: true
+          type: string
+        - name: end_date
+          in: query
+          description: Store measurements from start_date to this date
+          required: true
+          type: string
+        - name: comment
+          in: query
+          description: Comment and/or notes on the new data set
+          required: false
+          type: string(150)
+        - name: test_name
+          in: query
+          description: Name of the test (web_connectivity, dns_consistency, etc)
+          required: true
+          type: string(25)
+      tags:
+        - Store
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X POST -H "Content-Type: application/json" -d '{"set_name": "WireFilter_Search3", "test_name": "web_connectivity",
+            "start_date": "2016-08-20", "end_date": "2016-08-21", "comment": "Search for use of WireFilter in countries other than SA"}' "http://localhost:5000/api/store"
+        - lang: Python
+          source: |
+            import requests
+
+            data = {
+                      "set_name": "WireFilter_Search",
+                      "test_name": "web_connectivity",
+                      "start_date": "2016-08-20",
+                      "end_date": "2016-08-21",
+                      "comment": "Search for use of WireFilter in countries other than SA"
+                   }
+            r = requests.post('http://localhost:5000/api/store', data)
+            r.json()
+      responses:
+        201:
+          description: The updated meta data is returned
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "new_set": {
+                      "set_id": 1,
+                      "comment": "Search for use of WireFilter in countries other than SA",
+                      "set_name": "WireFilter_Search",
+                      "creation_date": "2018-07-20T09:55:18.049506+00:00",
+                      "test_name": "web_connectivity"
+                  }
+              }
+        '400':
+          description: Bad request
+        '422':
+          description: Required inputs not provided
+        '404':
+          description: Not found
+  /webconn:
+    get:
+      summary: Returns all Webconn data sets from the Meta Table
+      description: |
+        Returns all the meta information about data sets regarding web_connectivity tests.
+      tags:
+        - Web Connectivity
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/webconn"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/webconn')
+            r.json()
+      responses:
+        200:
+          description: Returns list of meta data
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                        "set_id": 1,
+                        "test_name": "web_connectivity",
+                        "set_name": "WireFilter_Search",
+                        "comment": "Search for use of WireFilter in countries other than SA",
+                        "creation_date": "2018-07-20T09:55:18.049506+00:00"
+                      },
+                      {
+                        "set_id": 6,
+                        "test_name": "web_connectivity",
+                        "set_name": "CH budweiser.com webconn test",
+                        "comment": null,
+                        "creation_date": "2018-08-01T12:24:04.712466+00:00"
+                      }
+                  ]
+              }
+
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+
+  /webconn?set_id={set_id}:
+    get:
+      summary: Returns a specified data set from the Webconn Table
+      description: |
+        Given the ID of a data set the user wants to extract, the request returns data from the Webconn Table containing
+        basic information such as a link to download a specific measurement data, the url that was tested, the country, etc.
+      tags:
+        - Web Connectivity
+      parameters:
+        - name: set_id
+          in: query
+          description: ID of dataset to be extracted and downloaded
+          required: true
+          type: integer
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/webconn?set_id={set_id}"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/webconn?set_id={set_id}')
+            r.json()
+      responses:
+        200:
+          description: Returns list of Webconn Table content
+          schema:
+            $ref: '#/definitions/WebconnTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                          "id": 1098,
+                          "set_id": 7,
+                          "tested_url": "http://a1408.g.akamai.net/5/1408/1388/2005110406/1a1a1ad948be278cff2d96046ad90768d848b41947aa1986/sample_sorenson.mov.zip",
+                          "country": "GB",
+                          "asn": "AS12876",
+                          "test_date": "2017-06-20T00:00:24+00:00",
+                          "test_version": "0.1.0",
+                          "download_link": "https://api.ooni.io/files/download/2017-06-20/20170620T000024Z-GB-AS12876-web_connectivity-20170620T000025Z_AS12876_1VOPKKdWVG6WO6csVtWWeIrpwo9uHRGQZ3Uafj9oMWhRC3OmBN-0.2.0-probe.json"
+                      },
+                      {
+                          "id": 1099,
+                          "set_id": 7,
+                          "tested_url": "http://666games.net",
+                          "country": "GB",
+                          "asn": "AS12876",
+                          "test_date": "2017-06-20T00:00:24+00:00",
+                          "test_version": "0.1.0",
+                          "download_link": "https://api.ooni.io/files/download/2017-06-20/20170620T000024Z-GB-AS12876-web_connectivity-20170620T000025Z_AS12876_1VOPKKdWVG6WO6csVtWWeIrpwo9uHRGQZ3Uafj9oMWhRC3OmBN-0.2.0-probe.json"
+                      },
+
+                  ]
+              }
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+  /webconn/{webconn_table}?set_id={set_id}&api_download={true|false}:
+    get:
+      summary: Downloads a web connectivity data set from a specified table
+      description: |
+        Given a set_id and a table, the specified data set is queried from the defined table and downloaded
+        in a .csv file. The file is named 'set_{set_id}-{webcon_table_neame}'.
+      tags:
+        - Web Connectivity
+      parameters:
+        - name: set_id
+          in: query
+          description: ID of the dataset to be studied
+          required: true
+          type: integer
+        - name: table
+          in: path
+          description: Name of the webconn table to extract data from. See About page for information about available tables
+          required: true
+          type: string
+        - name: api_download
+          in: query
+          description: Set to 'true' if you are sending request to API endpoint. This will download the csv into your home directory instead of serving it to the browser. Default set to false
+          required: false
+          type: string
+
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/webconn/{webconn_table}?set_id={set_id}"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/webconn/{webconn_table}?set_id={set_id}')
+            r.json()
+      responses:
+        200:
+          description: Download .csv file
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+
+  /dns_consistency:
+    get:
+      summary: Returns all DNS consistency data sets from the Meta Table
+      description: |
+        Returns all data sets that used the dns consistency test from the Meta Table
+      tags:
+        - DNS Consistency
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/dns_consistency"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/dns_consistency')
+            r.json()
+      responses:
+        200:
+          description: Returns list of data sets from meta table
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                          "set_id": 2,
+                          "set_name": "dns test1",
+                          "test_name": "dns_consistency",
+                          "comment": null,
+                          "creation_date": "2018-08-09T15:33:05.682899+00:00"
+                      }
+                  ]
+              }
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+
+  /dns_consistency?set_id={set_id}:
+    get:
+      summary: Returns a specified data set from the DNS Consistency table
+      description: |
+        Given a data set id, the specified data set is returned from the DNS Consistency table.
+      tags:
+        - DNS Consistency
+      parameters:
+        - name: set_id
+          in: query
+          description: ID of dataset to be extracted and downloaded
+          required: true
+          type: integer
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/dns_consistency?set_id={set_id}"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/dns_consistency?set_id={set_id}')
+            r.json()
+      responses:
+        200:
+          description: Returns list of data from DNS Consistency Table
+          schema:
+            $ref: '#/definitions/DnsConsistencyTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                          "id": 1,
+                          "set_id": 6,
+                          "input": "666games.net",
+                          "country": "CH",
+                          "test_date": "2016-01-01T06:06:18+00:00",
+                          "test_name": "dns_consistency",
+                          "test_version": "0.6",
+                          "download_link": "https://api.ooni.io/files/download/2016-01-02/20160101T060618Z-CH-AS41715-dns_consistency-A5F5i1xR2XZ9oXvcXhvpZJmBV2rRzXNraDhKSN1ArFVOoPnckkGnJqMo9snn5qDN-0.1.0-probe.yaml"
+                      },
+                      {
+                          "id": 2,
+                          "set_id": 6,
+                          "input": "8thstreetlatinas.com",
+                          "country": "CH",
+                          "test_date": "2016-01-01T06:06:18+00:00",
+                          "test_name": "dns_consistency",
+                          "test_version": "0.6",
+                          "download_link": "https://api.ooni.io/files/download/2016-01-02/20160101T060618Z-CH-AS41715-dns_consistency-A5F5i1xR2XZ9oXvcXhvpZJmBV2rRzXNraDhKSN1ArFVOoPnckkGnJqMo9snn5qDN-0.1.0-probe.yaml"
+                      },
+                  ]
+              }
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+  /dns_consistency/{dns_table}?set_id={set_id}&api_download={true|false}:
+    get:
+      summary: Downloads a DNS consistency data set from a specified table
+      description: |
+        Given a set_id and a table, the specified data set is queried from the defined table and downloaded
+        in a .csv file. The file is named 'set_{set_id}-{dns_table_neame}'.
+      tags:
+        - DNS Consistency
+      parameters:
+        - name: set_id
+          in: query
+          description: ID of the dataset to be studied
+          required: true
+          type: integer
+        - name: table
+          in: path
+          description: Name of the dns table to extract data from. See About page for information about available tables
+          required: true
+          type: string
+        - name: api_download
+          in: query
+          description: Set to 'true' if you are sending request to API endpoint. This will download the csv into your home directory instead of serving it to the browser. Default set to false
+          required: false
+          type: string
+
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" "http://localhost:5000/api/dns_consistency/{dns_table}?set_id={set_id}"
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/dns_consistency/{dns_table}?set_id={set_id}')
+            r.json()
+      responses:
+        200:
+          description: Download .csv file
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+  /metatable:
+    get:
+      summary: Return Meta Table
+      description: |
+        This endpoint returns all datasets and their meta information for reference
+      tags:
+        - Meta Table
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET -H "Content-Type: application/json" http://localhost:5000/api/metatable
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/metatable')
+            r.json()
+
+      responses:
+        200:
+          description: All existing data sets are returned
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "data": [
+                      {
+                          "set_id": 1,
+                          "set_name": "WireFilter_Search",
+                          "test_name": "web_connectivity",
+                          "comment": "Search for use of WireFilter in countries other than SA",
+                          "creation_date": "2018-07-20T09:55:18.049506+00:00"
+                      },
+                      {
+                          "set_id": 2,
+                          "set_name": "CH budweiser.com dns test",
+                          "test_name": "dns_consistency",
+                          "comment": null,
+                          "creation_date": "2018-07-23T12:24:04.712466+00:00"
+                      }
+                  ]
+              }
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+    put:
+      summary: Edit Meta Table
+      description: |
+        Edits contents of the Meta Table such as the name of a data set or a comment given the data set's ID
+      parameters:
+        - name: set_id
+          in: query
+          description: The ID of the data set the user wants to change
+          required: true
+          type: integer
+        - name: set_name
+          in: query
+          description: New name for the specified data set
+          required: false
+          type: string(150)
+        - name: comment
+          in: query
+          description: New comment for the specified data set
+          required: false
+          type: string(150)
+      tags:
+        - Meta Table
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X PUT -H "Content-Type: application/json" -d '{"set_id": 1, "comment": "Changed comment"}' "http://localhost:5000/api/metatable"
+        - lang: Python
+          source: |
+            import requests
+
+            data = {
+                      "set_id": 1,
+                      "comment": "Changed comment"
+                   }
+            r = requests.put('http://localhost:5000/api/metatable', data)
+            r.json()
+      responses:
+        200:
+          description: The updated meta data is returned
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "updated_data": {
+                      "set_id": 1,
+                      "set_name": "WireFilter_Search",
+                      "test_name": "web_connectivity",
+                      "comment": "Changed comment",
+                      "creation_date": "2018-07-20T09:55:18.049506+00:00"
+                  }
+              }
+        '400':
+          description: Bad request
+        '402':
+          description: Specified table does not exist
+        '404':
+          description: Not found
+    delete:
+      summary: Delete data set
+      description: |
+        Deletes a specified data set. All data in the specified data set is deleted from the Pipeline's database
+      parameters:
+        - name: set_id
+          in: query
+          description: The ID of the data set the user wants to delete
+          required: false
+          type: integer
+        - name: set_name
+          in: query
+          description: The name of the data set the user wants to delete
+          required: false
+          type: string(150)
+      tags:
+        - Meta Table
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X DELETE -H "Content-Type: application/json" -d '{"set_id": 2}' "http://localhost:5000/api/metatable"
+        - lang: Python
+          source: |
+            import requests
+
+            data = {
+                      "set_id": 2,
+                   }
+            r = requests.delete('http://localhost:5000/api/metatable', data)
+            r.json()
+      responses:
+        200:
+          description: The updated meta data is returned
+          schema:
+            $ref: '#/definitions/MetaTable'
+          examples:
+            application/json:
+              {
+                  "status": "success",
+                  "deleted_table": {
+                      "set_id": 2,
+                      "set_name": "CH budweiser.com dns test",
+                      "test_name": "dns_consistency",
+                      "comment": null,
+                      "creation_date": "2018-07-23T12:24:04.712466+00:00"
+                  }
+              }
+        '400':
+          description: Bad request
+        '402':
+          description: Specified table does not exist
+        '404':
+          description: Not found
+
+  /download:
+    get:
+      summary: Downloads Meta Table as .csv file
+      description: |
+        This endpoint downloads the whole meta table as meta_table.csv
+      tags:
+        - Download
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET http://localhost:5000/api/download
+        - lang: Python
+          source: |
+            import requests
+
+            r = requests.get('http://localhost:5000/api/download')
+            r.json()
+
+      responses:
+        200:
+          description: meta_table.csv is downloaded
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+
+  /download/{test_name}/{table_name}?set_id={set_id}:
+    get:
+      summary: Downloads any specified table
+      description: |
+        Downloads a specific table in .csv format from a defined set.
+      parameters:
+        - name: test_name
+          in: path
+          description: Name of the test (ex. web_connectivity)
+          required: true
+          type: string
+        - name: table_name
+          in: path
+          description: Name of the table you want to download (ex. web_test_keys)
+          required: true
+          type: string
+        - name: set_id
+          in: query
+          description: ID of the set you want to download
+          required: false
+          type: integer
+      tags:
+        - Download
+      x-code-samples:
+        - lang: curl
+          source: |
+            curl -X GET "http://localhost:5000/api/download/{test_name}/{table_name}?set_id={set_id}"
+      responses:
+        200:
+          description: The updated meta data is returned
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+
+  /headers:
+    post:
+      summary: Searches for data in response headers
+      description: |
+        Searches for data in response headers in web_connectivity tests
+      parameters:
+            - name: field_name
+              in: query
+              description: The name of the field you are searching your data in (ex. Content-Type)
+              required: true
+              type: string
+            - name: target_data
+              in: query
+              description: The data you are searching for
+              required: true
+              type: string
+            - name: country
+              in: query
+              description: ISO Alpha-2 country code
+              required: false
+              type: string(2)
+            - name: asn
+              in: query
+              description: Autonomous System Number
+              required: false
+              type: string
+            - name: url
+              in: query
+              description: Tested URL
+              required: false
+              type: string
+            - name: start_date
+              in: query
+              description: Store measurements from this date to the end_date
+              required: true
+              type: string
+            - name: end_date
+              in: query
+              description: Store measurements from start_date to this date
+              required: true
+              type: string
+      tags:
+      - Headers Search
+      responses:
+        200:
+          description: Search Headers for {target_data} in {field_name}.csv is downloaded
+        '422':
+          description: Required inputs not provided
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+        '500':
+          description: Internal Error
+
+  /body:
+    post:
+      summary: Searches for data in response body
+      description: |
+        Searches for data in response body in web_connectivity tests. Be mindful of the character limit on the body you
+        are searching for (1500 characters, 8000 bytes).
+      parameters:
+            - name: set_name
+              in: query
+              description: Name of output file; do not specify file extension (.csv, .pdf, etc)
+              required: true
+              type: string
+            - name: target_body
+              in: query
+              description: Text you are searching for
+              required: true
+              type: string (1500)
+            - name: country
+              in: query
+              description: ISO Alpha-2 country code
+              required: false
+              type: string(2)
+            - name: asn
+              in: query
+              description: Autonomous System Number
+              required: false
+              type: string
+            - name: url
+              in: query
+              description: Tested URL
+              required: false
+              type: string
+            - name: start_date
+              in: query
+              description: Store measurements from this date to the end_date
+              required: true
+              type: string
+            - name: end_date
+              in: query
+              description: Store measurements from start_date to this date
+              required: true
+              type: string
+      tags:
+      - Body Search
+      responses:
+        200:
+          description: set_name.csv is downloaded
+        '422':
+          description: Required inputs not provided
+        '400':
+          description: Bad request
+        '404':
+          description: Not found
+        '500':
+          description: Internal Error
+
+
+definitions:
+  MetaTable:
+    type: object
+    properties:
+      set_id:
+        type: integer
+        description: Unique identifier representing a data set
+      set_name:
+        type: string(150)
+        description: Name of a data set
+      test_name:
+        type: string(25)
+        description: Name of the measurement test
+      comment:
+        type: string(150)
+        description: Comments and or notes about the data set
+      creation_date:
+        type: timestamp
+        description: Date of when the data set was created
+  WebconnTable:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier representing a specific data in the data sets
+      set_id:
+        type: integer
+        description: ID of the dataset the data is a part of
+      country:
+        type: string
+        description: Country the measurement is from
+      asn:
+        type: string
+        description: ASN the measurement is from
+      tested_url:
+        type: string
+        description: URL that was tested
+      test_date:
+        type: string
+        description: Time when the measurement was taken
+      download_link:
+        type: string
+        description: Link to download measurement file
+      set_creation_date:
+        type: string
+        description: Time when the data set was created
+      test_version:
+        type: string
+        description: Version of the web_connectivity test used for measurement
+  DnsConsistencyTable:
+    type: object
+    properties:
+      id:
+        type: integer
+        description: Unique identifier representing a specific data in the data sets
+      set_id:
+        type: integer
+        description: ID of the dataset the data is a part of
+      country:
+        type: string
+        description: Country the measurement is from
+      asn:
+        type: string
+        description: ASN the measurement is from
+      input:
+        type: string
+        description: Input that was tested
+      test_date:
+        type: string
+        description: Time when the measurement was taken
+      download_link:
+        type: string
+        description: Link to download measurement file
+      set_creation_date:
+        type: string
+        description: Time when the data set was created
+      test_version:
+        type: string
+        description: Version of the web_connectivity test used for measurement
